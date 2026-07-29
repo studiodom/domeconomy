@@ -1,0 +1,113 @@
+package domeconomy.command;
+
+import domeconomy.DomEconomyMain;
+import domeconomy.gui.AtmMenu;
+import domeconomy.listener.AtmListener;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.milkbowl.vault.economy.Economy;
+import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public class BankCommand implements CommandExecutor, TabCompleter {
+
+    @Override
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+        String cmdName = command.getName().toLowerCase();
+
+        if (cmdName.equals("atm")) {
+            if (!(sender instanceof Player player)) {
+                sender.sendMessage("このコマンドはプレイヤーのみ実行できます。");
+                return true;
+            }
+            new AtmMenu().openSelection(player);
+            return true;
+        }
+
+        if (cmdName.equals("bank")) {
+            if (args.length > 0 && args[0].equalsIgnoreCase("atm")) {
+                if (!sender.hasPermission("domeconomy.admin") && !sender.isOp()) {
+                    sender.sendMessage(Component.text("❌ 権限がありません。", NamedTextColor.RED));
+                    return true;
+                }
+                Player targetPlayer;
+                if (args.length > 1) {
+                    targetPlayer = Bukkit.getPlayerExact(args[1]);
+                    if (targetPlayer == null) {
+                        sender.sendMessage(Component.text("❌ 対象のプレイヤーが見つからないか、オフラインです。", NamedTextColor.RED));
+                        return true;
+                    }
+                } else {
+                    if (!(sender instanceof Player player)) {
+                        sender.sendMessage("プレイヤー名を指定してください。");
+                        return true;
+                    }
+                    targetPlayer = player;
+                }
+
+                targetPlayer.getInventory().addItem(AtmListener.createAtmItem());
+                targetPlayer.sendMessage(Component.text("🏛️ ATM端末を取得しました。地面に設置して使用してください。", NamedTextColor.GREEN));
+                if (targetPlayer != sender) {
+                    sender.sendMessage(Component.text("🏛️ " + targetPlayer.getName() + " にATM端末を付与しました。", NamedTextColor.GREEN));
+                }
+                return true;
+            }
+
+            if (!(sender instanceof Player player)) {
+                sender.sendMessage("このコマンドはプレイヤーのみ実行できます。");
+                return true;
+            }
+
+            Economy econ = DomEconomyMain.getEconomy();
+            double balance = econ.getBalance(player);
+
+            player.sendMessage(Component.text("====== 銀行 個人口座情報 ======", NamedTextColor.GOLD));
+            player.sendMessage(Component.text("デジタル口座残高: ", NamedTextColor.GRAY)
+                    .append(Component.text(String.format("%,.0f円", balance), NamedTextColor.GREEN)));
+            player.sendMessage(Component.text("--------------------------------------", NamedTextColor.YELLOW));
+            player.sendMessage(Component.text("• /atm   : デジタル口座の預入・引出画面を開く", NamedTextColor.YELLOW));
+            
+            if (player.isOp()) {
+                player.sendMessage(Component.text("• /bank atm [プレイヤー]  : [OP専用] ATMアイテムを付与", NamedTextColor.RED));
+            }
+            player.sendMessage(Component.text("=====================================", NamedTextColor.GOLD));
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
+        String cmdName = command.getName().toLowerCase();
+        if (cmdName.equals("bank")) {
+            if (args.length == 1) {
+                List<String> list = new ArrayList<>();
+                if ("atm".startsWith(args[0].toLowerCase())) {
+                    list.add("atm");
+                }
+                return list;
+            }
+            if (args.length == 2 && args[0].equalsIgnoreCase("atm")) {
+                List<String> list = new ArrayList<>();
+                for (Player p : Bukkit.getOnlinePlayers()) {
+                    if (p.getName().toLowerCase().startsWith(args[1].toLowerCase())) {
+                        list.add(p.getName());
+                    }
+                }
+                return list;
+            }
+        }
+        return Collections.emptyList();
+    }
+}
