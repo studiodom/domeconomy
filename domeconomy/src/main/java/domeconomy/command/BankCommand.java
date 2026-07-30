@@ -12,6 +12,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,7 @@ public class BankCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage("このコマンドはプレイヤーのみ実行できます。");
                 return true;
             }
-            new AtmMenu().openSelection(player);
+            AtmMenu.getInstance().openSelection(player);
             return true;
         }
 
@@ -55,7 +56,11 @@ public class BankCommand implements CommandExecutor, TabCompleter {
                     targetPlayer = player;
                 }
 
-                targetPlayer.getInventory().addItem(AtmListener.createAtmItem());
+                java.util.HashMap<Integer, ItemStack> remaining = targetPlayer.getInventory().addItem(AtmListener.createAtmItem());
+                for (ItemStack rem : remaining.values()) {
+                    targetPlayer.getWorld().dropItemNaturally(targetPlayer.getLocation(), rem);
+                }
+
                 targetPlayer.sendMessage(Component.text("🏛️ ATM端末を取得しました。地面に設置して使用してください。", NamedTextColor.GREEN));
                 if (targetPlayer != sender) {
                     sender.sendMessage(Component.text("🏛️ " + targetPlayer.getName() + " にATM端末を付与しました。", NamedTextColor.GREEN));
@@ -69,7 +74,7 @@ public class BankCommand implements CommandExecutor, TabCompleter {
             }
 
             Economy econ = DomEconomyMain.getEconomy();
-            double balance = econ.getBalance(player);
+            double balance = econ != null ? econ.getBalance(player) : 0.0;
 
             player.sendMessage(Component.text("====== 銀行 個人口座情報 ======", NamedTextColor.GOLD));
             player.sendMessage(Component.text("デジタル口座残高: ", NamedTextColor.GRAY)
@@ -77,7 +82,7 @@ public class BankCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(Component.text("--------------------------------------", NamedTextColor.YELLOW));
             player.sendMessage(Component.text("• /atm   : デジタル口座の預入・引出画面を開く", NamedTextColor.YELLOW));
             
-            if (player.isOp()) {
+            if (player.isOp() || player.hasPermission("domeconomy.admin")) {
                 player.sendMessage(Component.text("• /bank atm [プレイヤー]  : [OP専用] ATMアイテムを付与", NamedTextColor.RED));
             }
             player.sendMessage(Component.text("=====================================", NamedTextColor.GOLD));
@@ -99,6 +104,9 @@ public class BankCommand implements CommandExecutor, TabCompleter {
                 return list;
             }
             if (args.length == 2 && args[0].equalsIgnoreCase("atm")) {
+                if (!sender.hasPermission("domeconomy.admin") && !sender.isOp()) {
+                    return Collections.emptyList();
+                }
                 List<String> list = new ArrayList<>();
                 for (Player p : Bukkit.getOnlinePlayers()) {
                     if (p.getName().toLowerCase().startsWith(args[1].toLowerCase())) {

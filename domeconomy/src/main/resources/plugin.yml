@@ -8,5 +8,3 @@ commands:
     description: 銀行口座の確認
   atm:
     description: ATMの直接起動
-  pay:
-    description: GUI付きの視覚的な送金機能

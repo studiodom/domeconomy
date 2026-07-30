@@ -3,12 +3,14 @@ package domeconomy;
 import org.bukkit.plugin.java.JavaPlugin;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.plugin.RegisteredServiceProvider;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.server.ServiceRegisterEvent;
+import org.bukkit.event.server.ServiceUnregisterEvent;
 import domeconomy.command.BankCommand;
-import domeconomy.command.PayCommand;
 import domeconomy.listener.AtmListener;
-import domeconomy.listener.PayListener;
 
-public final class DomEconomyMain extends JavaPlugin {
+public final class DomEconomyMain extends JavaPlugin implements Listener {
 
     private static DomEconomyMain instance;
     private static Economy econ = null;
@@ -16,12 +18,6 @@ public final class DomEconomyMain extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
-
-        if (!setupEconomy()) {
-            getLogger().severe("Vault または経済プラグインが見つかりません！プラグインを無効化します。");
-            getServer().getPluginManager().disablePlugin(this);
-            return;
-        }
 
         BankCommand bankCommand = new BankCommand();
         if (this.getCommand("bank") != null) {
@@ -33,14 +29,10 @@ public final class DomEconomyMain extends JavaPlugin {
             this.getCommand("atm").setTabCompleter(bankCommand);
         }
 
-        PayCommand payCommand = new PayCommand();
-        if (this.getCommand("pay") != null) {
-            this.getCommand("pay").setExecutor(payCommand);
-            this.getCommand("pay").setTabCompleter(payCommand);
-        }
+        getServer().getPluginManager().registerEvents(new AtmListener(), this);
+        getServer().getPluginManager().registerEvents(this, this);
 
-        getServer().getPluginManager().registerEvents(new AtmListener(this), this);
-        getServer().getPluginManager().registerEvents(new PayListener(), this);
+        updateEconomyProvider();
 
         getLogger().info("経済コアプラグイン (domeconomy) が正常に有効化されました！");
     }
@@ -51,16 +43,27 @@ public final class DomEconomyMain extends JavaPlugin {
         getLogger().info("経済コアプラグイン (domeconomy) が無効化されました");
     }
 
-    private boolean setupEconomy() {
+    @EventHandler
+    public void onServiceRegister(ServiceRegisterEvent event) {
+        if (event.getProvider().getService() == Economy.class) {
+            updateEconomyProvider();
+        }
+    }
+
+    @EventHandler
+    public void onServiceUnregister(ServiceUnregisterEvent event) {
+        if (event.getProvider().getService() == Economy.class) {
+            updateEconomyProvider();
+        }
+    }
+
+    private void updateEconomyProvider() {
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
-            return false;
+            econ = null;
+            return;
         }
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
-        if (rsp == null) {
-            return false;
-        }
-        econ = rsp.getProvider();
-        return econ != null;
+        econ = rsp != null ? rsp.getProvider() : null;
     }
 
     public static DomEconomyMain getInstance() {
