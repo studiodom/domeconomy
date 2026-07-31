@@ -100,7 +100,7 @@ public class AtmListener implements Listener {
             }
         }
         String baseLocStr = block.getWorld().getName() + "," + block.getX() + "," + block.getY() + "," + block.getZ();
-        Collection<Entity> entities = block.getWorld().getNearbyEntities(block.getLocation().add(0.5, ARMOR_STAND_Y_OFFSET, 0.5), 0.5, 1.5, 0.5);
+        Collection<Entity> entities = block.getWorld().getNearbyEntities(block.getLocation().add(0.5, ARMOR_STAND_Y_OFFSET, 0.5), 0.2, 0.5, 0.2);
         for (Entity entity : entities) {
             if (entity instanceof ArmorStand stand) {
                 String storedLoc = stand.getPersistentDataContainer().get(KEY_ATM_OWNER, PersistentDataType.STRING);
@@ -149,7 +149,7 @@ public class AtmListener implements Listener {
                     armorStand.setInvisible(true);
                     armorStand.setGravity(false);
                     armorStand.setInvulnerable(true);
-                    
+
                     if (armorStand.getEquipment() != null) {
                         armorStand.getEquipment().setHelmet(createAtmItem());
                     }
@@ -181,7 +181,7 @@ public class AtmListener implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onEntityDamage(EntityDamageByEntityEvent event) {
         if (event.getEntity() instanceof ArmorStand stand) {
             if (stand.getPersistentDataContainer().has(KEY_IS_ATM, PersistentDataType.BOOLEAN)) {
@@ -209,15 +209,25 @@ public class AtmListener implements Listener {
         if (block.getType() != Material.BARRIER) return;
 
         BlockLoc loc = getBlockLoc(block.getLocation());
+        Player player = event.getPlayer();
+        boolean isCreativeOp = player.isOp() && player.getGameMode() == org.bukkit.GameMode.CREATIVE;
+
         Entity atmEntity = getAtmEntity(block);
         boolean isAtmBroken = false;
 
         if (atmEntity != null) {
-            Player player = event.getPlayer();
-            if (player.isOp() && player.getGameMode() == org.bukkit.GameMode.CREATIVE) {
+            if (isCreativeOp) {
                 isAtmBroken = true;
                 atmCache.remove(loc);
                 atmEntity.remove();
+            } else {
+                event.setCancelled(true);
+                return;
+            }
+        } else if (atmCache.containsKey(loc)) {
+            if (isCreativeOp) {
+                isAtmBroken = true;
+                atmCache.remove(loc);
             } else {
                 event.setCancelled(true);
                 return;
@@ -230,8 +240,7 @@ public class AtmListener implements Listener {
                     String storedLoc = stand.getPersistentDataContainer().get(KEY_ATM_OWNER, PersistentDataType.STRING);
                     if (storedLoc != null && storedLoc.equals(baseLocStr)) {
                         if (stand.getPersistentDataContainer().has(KEY_IS_ATM, PersistentDataType.BOOLEAN)) {
-                            Player player = event.getPlayer();
-                            if (player.isOp() && player.getGameMode() == org.bukkit.GameMode.CREATIVE) {
+                            if (isCreativeOp) {
                                 isAtmBroken = true;
                                 atmCache.remove(loc);
                                 stand.remove();
@@ -265,6 +274,11 @@ public class AtmListener implements Listener {
         }
 
         if (event.getClick() == ClickType.NUMBER_KEY) {
+            event.setCancelled(true);
+            return;
+        }
+
+        if (event.getClick() == ClickType.SWAP_OFFHAND) {
             event.setCancelled(true);
             return;
         }

@@ -7,7 +7,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.ServiceRegisterEvent;
 import org.bukkit.event.server.ServiceUnregisterEvent;
-import domeconomy.command.BankCommand;
+import domeconomy.command.AtmCommand;
 import domeconomy.listener.AtmListener;
 
 public final class DomEconomyMain extends JavaPlugin implements Listener {
@@ -19,14 +19,10 @@ public final class DomEconomyMain extends JavaPlugin implements Listener {
     public void onEnable() {
         instance = this;
 
-        BankCommand bankCommand = new BankCommand();
-        if (this.getCommand("bank") != null) {
-            this.getCommand("bank").setExecutor(bankCommand);
-            this.getCommand("bank").setTabCompleter(bankCommand);
-        }
+        AtmCommand atmCommand = new AtmCommand();
         if (this.getCommand("atm") != null) {
-            this.getCommand("atm").setExecutor(bankCommand);
-            this.getCommand("atm").setTabCompleter(bankCommand);
+            this.getCommand("atm").setExecutor(atmCommand);
+            this.getCommand("atm").setTabCompleter(atmCommand);
         }
 
         getServer().getPluginManager().registerEvents(new AtmListener(), this);

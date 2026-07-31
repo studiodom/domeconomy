@@ -1,6 +1,5 @@
 package domeconomy.model;
 
-import domeconomy.DomEconomyMain;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -36,7 +35,7 @@ public enum PhysicalCurrency {
     private final int customModelData;
 
     private static final Map<Integer, PhysicalCurrency> BY_CUSTOM_MODEL_DATA = new HashMap<>();
-    public static final NamespacedKey KEY_VALUE = new NamespacedKey(DomEconomyMain.getInstance(), "currency_value");
+    public static final NamespacedKey KEY_VALUE = new NamespacedKey("domeconomy", "currency_value");
 
     static {
         for (PhysicalCurrency currency : values()) {
@@ -68,19 +67,19 @@ public enum PhysicalCurrency {
 
     public static double getMoneyValue(ItemStack item) {
         if (item == null) return 0;
-        
+
         if (item.getType() != Material.GOLD_NUGGET) {
             return 0;
         }
 
         if (!item.hasItemMeta()) return 0;
         ItemMeta meta = item.getItemMeta();
-        
+
         if (meta.getPersistentDataContainer().has(KEY_VALUE, PersistentDataType.DOUBLE)) {
             Double pVal = meta.getPersistentDataContainer().get(KEY_VALUE, PersistentDataType.DOUBLE);
             if (pVal != null) return pVal;
         }
-        
+
         return 0;
     }
 }

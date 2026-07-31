@@ -4,7 +4,5 @@ main: domeconomy.DomEconomyMain
 api-version: '1.21'
 depend: [Vault]
 commands:
-  bank:
-    description: 銀行口座の確認
   atm:
-    description: ATMの直接起動
+    description: ATMの起動および管理コマンド

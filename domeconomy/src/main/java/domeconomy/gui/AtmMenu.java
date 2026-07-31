@@ -1,7 +1,7 @@
 package domeconomy.gui;
 
-import domeconomy.model.PhysicalCurrency;
 import domeconomy.DomEconomyMain;
+import domeconomy.model.PhysicalCurrency;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.milkbowl.vault.economy.Economy;
@@ -30,23 +30,24 @@ public class AtmMenu {
     public static final int DEPOSIT_CONFIRM_SIZE = 27;
     public static final int WITHDRAW_SIZE = 36;
     public static final double MAX_TRANSACTION_LIMIT = 9000000000000.0;
+    public static final int ATM_CUSTOM_MODEL_DATA = 9999;
 
     public static final int[] WITHDRAW_BUTTONS = {
-        11, 12, 13, 14, 15,
-        20, 21, 22, 23, 24
+            11, 12, 13, 14, 15,
+            20, 21, 22, 23, 24
     };
 
     private static final PhysicalCurrency[] WITHDRAW_CURRENCIES = {
-        PhysicalCurrency.YEN_1,
-        PhysicalCurrency.YEN_10,
-        PhysicalCurrency.YEN_100,
-        PhysicalCurrency.YEN_1000,
-        PhysicalCurrency.YEN_10000,
-        PhysicalCurrency.YEN_100000,
-        PhysicalCurrency.YEN_1000000,
-        PhysicalCurrency.YEN_10000000,
-        PhysicalCurrency.YEN_100000000,
-        PhysicalCurrency.YEN_1000000000000L
+            PhysicalCurrency.YEN_1,
+            PhysicalCurrency.YEN_10,
+            PhysicalCurrency.YEN_100,
+            PhysicalCurrency.YEN_1000,
+            PhysicalCurrency.YEN_10000,
+            PhysicalCurrency.YEN_100000,
+            PhysicalCurrency.YEN_1000000,
+            PhysicalCurrency.YEN_10000000,
+            PhysicalCurrency.YEN_100000000,
+            PhysicalCurrency.YEN_1000000000000L
     };
 
     private static final ItemStack SELECT_BACKGROUND_GLASS;
@@ -88,6 +89,16 @@ public class AtmMenu {
         for (int i = 0; i < WITHDRAW_CURRENCIES.length; i++) {
             CACHED_WITHDRAW_ITEMS[i] = WITHDRAW_CURRENCIES[i].createItemStack(1);
         }
+    }
+
+    private ItemStack getGlass(Material material) {
+        ItemStack glass = new ItemStack(material);
+        ItemMeta meta = glass.getItemMeta();
+        if (meta != null) {
+            meta.displayName(Component.text(" "));
+            glass.setItemMeta(meta);
+        }
+        return glass;
     }
 
     public void openSelection(Player player) {
@@ -143,9 +154,9 @@ public class AtmMenu {
         if (infoMeta != null) {
             infoMeta.displayName(Component.text("📋 預け入れ詳細", NamedTextColor.YELLOW));
             infoMeta.lore(java.util.List.of(
-                Component.text("預け入れ額: " + String.format("%,.0f円", totalOnPlayer), NamedTextColor.GREEN),
-                Component.text("現在の残高: " + String.format("%,.0f円", balance), NamedTextColor.GRAY),
-                Component.text("預入後の残高: " + String.format("%,.0f円", (balance + totalOnPlayer)), NamedTextColor.GRAY)
+                    Component.text("預け入れ額: " + String.format("%,.0f円", totalOnPlayer), NamedTextColor.GREEN),
+                    Component.text("現在の残高: " + String.format("%,.0f円", balance), NamedTextColor.GRAY),
+                    Component.text("預入後の残高: " + String.format("%,.0f円", (balance + totalOnPlayer)), NamedTextColor.GRAY)
             ));
             info.setItemMeta(infoMeta);
         }
